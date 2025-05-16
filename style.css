@@ -372,6 +372,7 @@ ul li {
     flex-direction: row;
     width: 100vw;
     height: 100vh;
+    overflow: hidden;
 }
 
 #canvas-area {
@@ -385,12 +386,25 @@ ul li {
     overflow: hidden;
 }
 
+/* #canvasTwoUp, */
 #ccc1,
 #ccc2,
+#canvasSwipe,
+#canvasOnionSkin,
+#canvasSabun {
+    overflow: scroll;
+    /* position: relative; */
+}
+
+#ccc1,
+#ccc2 {
+    /* margin: 0 10px; */
+    /* background-color: #add; */
+}
+
 #swipeCanvas,
 #onionSkinCanvas,
 #sabunCanvas {
-    margin: 0 10px;
     /* background-color: #add; */
 }
 
@@ -399,7 +413,7 @@ ul li {
     display: none;
     position: relative;
     width: 50vw;
-    height: 88vh;
+    height: 90vh;
     z-index: 10;
     background-color: #cdd;
 }
@@ -409,7 +423,7 @@ ul li {
     display: block;
     position: absolute;
     width: 100vw;
-    height: 88vh;
+    height: 90vh;
     top: 0;
     left: 0;
 }
@@ -423,11 +437,39 @@ ul li {
 }
 
 #canvas-bottom {
+    /* border-top: 10px solid #cdd; */
     height: 10vh;
     width: 100vw;
     display: block;
     position: relative;
     background-color: #ddd;
+    padding: 10px;
+    z-index: 50;
+}
+
+.diffChangeui {
+    display: flex;
+}
+
+#zoomSliderContainer {
+    margin-top: 5px;
+    margin-left: 10px;
+    display: flex;
+    width: 250px;
+    z-index: 50;
+}
+
+#zoomSliderContainer span {
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+}
+
+#canvasZoomValue {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    margin-left: 5px;
 }
 
 #swipeSliderContainer {
@@ -450,21 +492,30 @@ ul li {
     top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 10;
+    z-index: 50;
     background: rgba(255, 255, 255, 0.8);
     padding: 5px 10px;
     border-radius: 8px;
     display: none;
 }
 
+#opacitySliderContainer {
+    display: flex;
+    align-items: center;
+}
+
 .modeChange {
     display: flex;
+    margin-left: 10px;
 }
 
 .modeChange label {
-    margin-top: 15px;
-    margin-left: 15px;
     display: flex;
+    align-items: center;
+}
+
+.modeChange label:nth-of-type(n+2) {
+    margin-left: 10px;
 }
 
 #backPileUpButton {
@@ -479,6 +530,56 @@ ul li {
 
 #backPileUpButton:hover {
     color: #888;
+}
+
+#expTogetherContainer {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 670px;
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+    border-radius: 8px;
+    display: none;
+    align-items: center;
+}
+
+#expTogether-button {
+    display: inline-block;
+    position: relative;
+    margin-left: 20px;
+    width: 70px;
+    height: 38px;
+    border-radius: 10px;
+    background-color: #333;
+    cursor: pointer;
+}
+
+#expTogether-button:has(:checked) {
+    background-color: #4bd865;
+}
+
+#expTogether-button::after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 18px;
+    height: 38px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgb(0 0 0 / 20%);
+    background-color: #fff;
+    content: '';
+    /* transition: left .4s; */
+}
+
+#expTogether-button:has(:checked)::after {
+    left: 52px;
+}
+
+#expTogether-button input {
+    display: none;
 }
 
 /* Firefoxのみ対応させる */
@@ -765,7 +866,7 @@ ul li {
 } */
 }
 
-@media (min-width:1300px) and (max-width:1500px) {
+@media (min-width:1200px) and (max-width:1500px) {
 
     .dragCheck {
         margin-left: 1em;
@@ -783,5 +884,85 @@ ul li {
         right: .15em;
         cursor: pointer;
         font-size: 2.5em;
+    }
+
+    .reset,
+    #toggle-drag,
+    #select-all-button,
+    #diffrent-check-button {
+        font-size: 14px;
+        border-radius: 5px;
+    }
+
+    .reset {
+        margin-left: 0;
+    }
+
+    .resettip {
+        top: -9.5em;
+        left: -6.8em;
+    }
+
+    .dragtip {
+        top: -15.5em;
+        left: 12.7em;
+    }
+
+    .allSelecttip {
+        top: -9.5em;
+        left: 33.8em;
+    }
+
+    .diffChecktip {
+        top: -9.5em;
+        left: 44.5em;
+    }
+
+    #canvas-area {
+        height: 85vh;
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #cdd;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #ccc1,
+    #ccc2 {
+        display: none;
+        position: relative;
+        width: 50vw;
+        /* height: 85vh; */
+        z-index: 10;
+        background-color: #cdd;
+    }
+
+    #swipeCanvas,
+    #onionSkinCanvas {
+        display: block;
+        position: absolute;
+        width: 100vw;
+        height: 90vh;
+        top: 0;
+        left: 0;
+    }
+
+    #sabunCanvas {
+        width: 100%;
+        height: 88vh;
+        position: relative;
+        overflow: hidden;
+        z-index: 20;
+    }
+
+    #canvas-bottom {
+        height: 15vh;
+        width: 100vw;
+        display: block;
+        position: relative;
+        background-color: #ddd;
+        padding: 10px;
     }
 }

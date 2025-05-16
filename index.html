@@ -49,15 +49,29 @@
                     <label><input type="radio" name="modeChange" value="onionSkin">onionSkin</label>
                     <!-- <label><input type="radio" name="modeChange" value="sabun">sabun</label> -->
                 </div>
+            </div>
 
-                <div id="swipeSliderContainer">
-                    <input type="range" id="swipeSlider" min="0" max="100" value="100">
-                </div>
+            <div id="expTogetherContainer">
+                <span>このスイッチをＯＮにすると、拡大後に左右の画像の描画位置が同期します。<br>
+                ＯＦＦにすると左右はバラバラに動きます。</span>
+                <label id="expTogether-button">
+                    <input type="checkbox" id="expTogetherToggle">
+                </label>
+            </div>
 
-                <div id="opacitySliderContainer">
-                    不透明度:
-                    <input type="range" id="opacitySlider" min="0" max="100" value="100" step="10">
-                </div>
+            <div id="zoomSliderContainer">
+                <span>拡大率</span>
+                <input type="range" id="canvasZoomSlider" min="0" max="200" value="0" step="10">
+                <span id="canvasZoomValue">0%</span>
+            </div>
+
+            <div id="swipeSliderContainer">
+                <input type="range" id="swipeSlider" min="0" max="100" value="100">
+            </div>
+
+            <div id="opacitySliderContainer">
+                <span>不透明度</span>
+                <input type="range" id="opacitySlider" min="0" max="100" value="100" step="10">
             </div>
             <span id="backPileUpButton">&times;</span>
         </div>

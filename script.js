@@ -332,6 +332,10 @@ function zoomOut() {
 
 function setupZoomShortcuts() {
     document.addEventListener('keydown', (e) => {
+        const pileUp = document.getElementById('pileUp');
+        const isVisible = pileUp && window.getComputedStyle(pileUp).display !== 'none';
+        if (!isVisible) return;
+
         if (e.ctrlKey || e.metaKey) {
             const key = e.key;
 
@@ -621,30 +625,38 @@ function drawImageToCanvas(div, imageUrl) {
         const displayWidth = div.clientWidth;
         const displayHeight = div.clientHeight;
 
-        // 内部解像度をデバイスピクセル比に合わせて高精細化
-        const scale = Math.min(
+        const initialScale = Math.min(
             displayWidth / img.width,
             displayHeight / img.height,
             1
         );
 
-        const drawWidth = img.width * scale;
-        const drawHeight = img.height * scale;
-        const offsetX = (displayWidth - drawWidth) / 2;
-        const offsetY = (displayHeight - drawHeight) / 2;
+        const drawWidth = img.width * initialScale;
+        const drawHeight = img.height * initialScale;
 
-        img.style.width = `${drawWidth}px`;
-        img.style.height = `${drawHeight}px`;
-        img.style.position = 'absolute';
-        img.style.left = `${offsetX}px`;
-        img.style.top = `${offsetY}px`;
+        img.style.objectFit = "contain";
+        img.style.position = "absolute";
+        img.style.top = "0";
+        img.style.left = "0";
+        img.style.right = "0";
+        img.style.bottom = "0";
+        img.style.margin = "auto";
 
         div.appendChild(img);
+
+        baseImageSizes.set(img, {
+            width: drawWidth,
+            height: drawHeight,
+            container: div
+        });
+
+        updateCanvasZoom();
     };
     img.src = imageUrl;
 }
 
 function showTwoUp() {
+    canvasZoomLevel = 0;
     const visibleImages = images.filter(img => img.visible);
     if (visibleImages.length !== 2) return;
 
@@ -657,11 +669,13 @@ function showTwoUp() {
 }
 
 function showSwipe() {
+    // canvasZoomLevel = 0;
     const visibleImages = images.filter(img => img.visible);
     if (visibleImages.length !== 2) return;
 
     const div = document.getElementById("swipeCanvas");
     div.innerHTML = "";
+    baseImageSizes.clear();
 
     const imgA = new Image();
     const imgB = new Image();
@@ -711,21 +725,27 @@ function drawSwipeImages(div, imgA, imgB, sliderValue) {
     imgB.style.zIndex = 2;
 
     // clip-path を使って画像Bを右から左にスライド表示
-    const percentage = sliderValue;
+    const percentage = sliderValue; // スライダーの値
     imgB.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`; // 上 右 下 左（％）
 
     // 初回のみ追加（同じ画像を何度も追加しない）
     if (!div.contains(imgA)) div.appendChild(imgA);
     if (!div.contains(imgB)) div.appendChild(imgB);
+
+    // 拡大スケールを反映させた画像サイズの保存
+    baseImageSizes.set(imgA, { width: drawWidth, height: drawHeight, container: div });
+    baseImageSizes.set(imgB, { width: drawWidth, height: drawHeight, container: div });
 }
 
 // onionSkinモードで画像を重ねて表示する関数
 function showOnionSkin() {
+    // canvasZoomLevel = 0;
     const visibleImages = images.filter(img => img.visible);
     if (visibleImages.length !== 2) return;
 
     const div = document.getElementById("onionSkinCanvas");
     div.innerHTML = "";
+    baseImageSizes.clear();
 
     const sliderContainer = document.getElementById("opacitySliderContainer");
     sliderContainer.style.display = "block";  // スライダー表示
@@ -779,6 +799,9 @@ function drawOnionSkinImages(div, imgA, imgB) {
     if (!div.contains(imgB)) div.appendChild(imgB);
 
     imgB.style.opacity = onionSkinOpacity;
+
+    baseImageSizes.set(imgA, { width: drawWidth, height: drawHeight, container: div });
+    baseImageSizes.set(imgB, { width: drawWidth, height: drawHeight, container: div });
 }
 
 // スライダーで不透明度を変更
@@ -795,48 +818,136 @@ document.getElementById("opacitySlider").addEventListener("input", (e) => {
     }
 });
 
-// function loadImage(url) {
-//     return new Promise((resolve) => {
-//         const img = new Image();
-//         img.crossOrigin = "anonymous";
-//         img.src = url;
-//         img.onload = () => resolve(img);
-//     });
-// }
+// Zoom機能
+const baseImageSizes = new Map();
+let canvasZoomLevel = 100;
 
-// async function showPixelDiff() {
-//     const visibleImages = images.filter(img => img.visible);
-//     if (visibleImages.length !== 2) {
-//         console.warn("2枚の画像が表示状態である必要があります。");
-//         return;
-//     }
+canvasZoomSlider.addEventListener('input', (e) => {
+    canvasZoomLevel = parseInt(e.target.value);
+    canvasZoomValue.textContent = `${canvasZoomLevel}%`;
+    updateCanvasZoom();
+});
 
-//     const sabunCanvas = document.getElementById("sabunCanvas");
-//     sabunCanvas.innerHTML = "";
+function CanvasResetZoom() {
+    canvasZoomLevel = 0;
+    canvasZoomSlider.value = canvasZoomLevel;
+    canvasZoomValue.textContent = `${canvasZoomLevel}%`;
+    updateCanvasZoom();
+}
 
-//     const [img1, img2] = await Promise.all([
-//         loadImage(visibleImages[0].url),
-//         loadImage(visibleImages[1].url)
-//     ]);
+function CanvasZoomIn() {
+    if (canvasZoomLevel < 200) {
+        canvasZoomLevel += 10;
+        canvasZoomSlider.value = canvasZoomLevel;
+        canvasZoomValue.textContent = `${canvasZoomLevel}%`;
+        updateCanvasZoom();
+    }
+}
 
-//     const style = {
-//         position: "absolute",
-//         top: "0",
-//         left: "0",
-//         width: "100%",
-//         height: "100%",
-//         objectFit: "contain"
-//     };
+function CanvasZoomOut() {
+    if (canvasZoomLevel > 0) {
+        canvasZoomLevel -= 10;
+        canvasZoomSlider.value = canvasZoomLevel;
+        canvasZoomValue.textContent = `${canvasZoomLevel}%`;
+        updateCanvasZoom();
+    }
+}
 
-//     Object.assign(img1.style, style);
-//     Object.assign(img2.style, style);
-//     img2.style.mixBlendMode = "difference";
+function updateCanvasZoom() {
+    const scale = 1 + canvasZoomLevel / 100;
 
-//     // ddd3 に2枚の画像を重ねて追加（img2が上）
-//     sabunCanvas.style.position = "relative";
-//     sabunCanvas.appendChild(img1);
-//     sabunCanvas.appendChild(img2);
-// }
+    baseImageSizes.forEach((baseSize, img) => {
+        img.style.transform = `scale(${scale})`;
+        img.style.transformOrigin = "top left";
+
+        // 画像の幅・高さを変更
+        img.style.width = `${baseSize.width}px`;
+        img.style.height = `${baseSize.height}px`;
+
+        img.style.position = 'absolute';
+    });
+}
+
+function setupCanvasZoomShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        const canvasContainer = document.getElementById('canvas-container');
+        const isVisible = canvasContainer && window.getComputedStyle(canvasContainer).display !== 'none';
+        if (!isVisible) return;
+
+        if (e.ctrlKey || e.metaKey) {
+            const key = e.key;
+
+            if (key === '0') {
+                e.preventDefault();
+                CanvasResetZoom();
+            } else if (key === 'ArrowRight' || key === 'ArrowUp') {
+                e.preventDefault();
+                CanvasZoomIn();
+            } else if (key === 'ArrowLeft' || key === 'ArrowDown') {
+                e.preventDefault();
+                CanvasZoomOut();
+            }
+        }
+    });
+}
+
+setupCanvasZoomShortcuts();
+
+function updateVisibleCanvasOverflow() {
+    const canvasWrappers = [
+        document.getElementById('ccc1'),
+        document.getElementById('ccc2'),
+        document.getElementById('swipeCanvas'),
+        document.getElementById('onionSkinCanvas'),
+        document.getElementById('sabunCanvas'),
+    ];
+
+    canvasWrappers.forEach(wrapper => {
+        if (window.getComputedStyle(wrapper).display !== 'none') {
+            wrapper.style.overflow = 'auto';
+        } else {
+            wrapper.style.overflow = 'scroll';
+        }
+    });
+}
+
+const expTogetherToggle = document.getElementById('expTogetherToggle');
+
+expTogetherToggle.addEventListener('change', () => {
+    if (expTogetherToggle.checked) {
+        const ccc1 = document.getElementById('ccc1');
+        const ccc2 = document.getElementById('ccc2');
+
+        // スクロール位置を統一
+        const scrollLeft = Math.max(ccc1.scrollLeft, ccc2.scrollLeft);
+        const scrollTop = Math.max(ccc1.scrollTop, ccc2.scrollTop);
+
+        ccc1.scrollLeft = scrollLeft;
+        ccc2.scrollLeft = scrollLeft;
+        ccc1.scrollTop = scrollTop;
+        ccc2.scrollTop = scrollTop;
+    }
+});
+
+function syncScroll(from, to) {
+    to.scrollLeft = from.scrollLeft;
+    to.scrollTop = from.scrollTop;
+}
+
+function setupScrollSync() {
+    const ccc1 = document.getElementById('ccc1');
+    const ccc2 = document.getElementById('ccc2');
+
+    ccc1.addEventListener('scroll', () => {
+        if (expTogetherToggle.checked) syncScroll(ccc1, ccc2);
+    });
+
+    ccc2.addEventListener('scroll', () => {
+        if (expTogetherToggle.checked) syncScroll(ccc2, ccc1);
+    });
+}
+
+setupScrollSync();
 
 const modeRadios = document.querySelectorAll('input[name="modeChange"]');
 let currentMode = "2-up";
@@ -854,30 +965,36 @@ function switchMode(mode) {
     const canvasArea = document.getElementById("canvas-area");
     const twoUpContainer = document.getElementById("canvasTwoUp");
     const swipeContainer = document.getElementById("canvasSwipe");
-    const sabunContainer = document.getElementById("canvasSabun");
 
     const swipeCanvas = document.getElementById("swipeCanvas");
     const onionSkinCanvas = document.getElementById("onionSkinCanvas");
-    const sabunCanvas = document.getElementById("sabunCanvas");
 
     const sliderContainer = document.getElementById("swipeSliderContainer");
     const opacitySliderContainer = document.getElementById("opacitySliderContainer");
+
+    const canvasZoomSlider = document.getElementById("canvasZoomSlider");
+    const expTogetherContainer = document.getElementById("expTogetherContainer");
 
     // 一旦すべて非表示
     twoUpContainer.style.display = "none";
     swipeContainer.style.display = "none";
     sliderContainer.style.display = "none";
-    // sabunContainer.style.display = "none";
     swipeCanvas.style.display = "none";
     onionSkinCanvas.style.display = "none";
     opacitySliderContainer.style.display = "none";
-    sabunCanvas.style.display = "none";
+    expTogetherContainer.style.display = "none";
+
+    if (canvasZoomSlider) {
+        canvasZoomSlider.value = 0;
+        canvasZoomValue.textContent = '0%';
+    }
 
     if (mode === "2-up") {
         canvasArea.style.display = "flex";
         twoUpContainer.style.display = "flex";
         document.getElementById("ccc1").style.display = "block";
         document.getElementById("ccc2").style.display = "block";
+        expTogetherContainer.style.display = "flex";
         requestAnimationFrame(() => {
             showTwoUp();
         });
@@ -892,12 +1009,9 @@ function switchMode(mode) {
         onionSkinCanvas.style.display = "block";
         opacitySliderContainer.style.display = "block";
         showOnionSkin();
-    } else if (mode === "sabun") {
-        canvasArea.style.display = "flex";
-        sabunCanvas.style.display = "block";
-        // sabunContainer.style.display = "block";
-        showPixelDiff();
     }
+
+    updateVisibleCanvasOverflow();
 }
 
 const backPileUp = document.getElementById("backPileUpButton");
