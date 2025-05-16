@@ -18,6 +18,12 @@ ul li {
     list-style-type: none;
 }
 
+#pileUp {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+}
+
 #drop-area {
     position: relative;
     width: 75%;
@@ -45,6 +51,7 @@ ul li {
 .reset:disabled,
 #toggle-drag:disabled,
 #select-all-button:disabled,
+#diffrent-check-button:disabled,
 .layer-item:disabled,
 #opacity-controls button:disabled,
 #opacity-slider:disabled {
@@ -147,7 +154,8 @@ ul li {
 
 .reset,
 #toggle-drag,
-#select-all-button {
+#select-all-button,
+#diffrent-check-button {
     border: none;
     cursor: pointer;
     font-size: 16px;
@@ -182,6 +190,15 @@ ul li {
     background-color: #712da7;
 }
 
+#diffrent-check-button {
+    color: #fff;
+    background-color: #a89e4f;
+}
+
+#diffrent-check-button:hover {
+    background-color: #a7a72d;
+}
+
 .help {
     border: none;
     cursor: pointer;
@@ -209,7 +226,8 @@ ul li {
 
 .resettip,
 .dragtip,
-.allSelecttip {
+.allSelecttip,
+.diffChecktip {
     display: none;
     position: absolute;
     z-index: 10;
@@ -237,6 +255,11 @@ ul li {
 .allSelecttip {
     top: -9.5em;
     left: 42.8em;
+}
+
+.diffChecktip {
+    top: -9.5em;
+    left: 55.5em;
 }
 
 @keyframes fadeIn {
@@ -342,7 +365,118 @@ ul li {
 }
 
 .hidden {
+    display: none !important;
+}
+
+#canvas-container {
     display: none;
+    flex-direction: row;
+    width: 100vw;
+    height: 100vh;
+}
+
+#canvas-area {
+    height: 90vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #cdd;
+    position: relative;
+    overflow: hidden;
+}
+
+#canvas-area canvas {
+    margin: 0 10px;
+    /* background-color: #add; */
+}
+
+#ccc1,
+#ccc2 {
+    display: none;
+    width: 50vw;
+    height: 88vh;
+    z-index: 10;
+    background-color: #cdd;
+}
+
+#canvas-bottom {
+    height: 10vh;
+    width: 100vw;
+    display: block;
+    position: relative;
+    background-color: #ddd;
+}
+
+#swipeCanvas {
+    display: block;
+    position: absolute;
+    width: 100vw;
+    height: 88vh;
+    top: 0;
+    left: 0;
+    z-index: 5;
+}
+
+#onionSkinCanvas {
+    display: block;
+    position: absolute;
+    width: 100vw;
+    height: 88vh;
+    top: 0;
+    left: 0;
+    z-index: 5;
+}
+
+#swipeSliderContainer {
+    display: none;
+}
+
+#swipeSlider {
+    position: absolute;
+    top: 25px;
+    left: 50.7%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: none;
+    text-align: center;
+    width: 38%;
+}
+
+#opacitySliderContainer {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+    border-radius: 8px;
+    display: none;
+}
+
+.modeChange {
+    display: flex;
+}
+
+.modeChange label {
+    margin-top: 15px;
+    margin-left: 15px;
+    display: flex;
+}
+
+#backPileUpButton {
+    position: absolute;
+    top: 3px;
+    right: 12px;
+    font-size: 2rem;
+    cursor: pointer;
+    border: none;
+    z-index: 10;
+}
+
+#backPileUpButton:hover {
+    color: #888;
 }
 
 /* Firefoxのみ対応させる */
@@ -564,7 +698,8 @@ ul li {
 
     .resettip,
     .dragtip,
-    .allSelecttip {
+    .allSelecttip,
+    .diffChecktip {
         display: none;
         position: absolute;
         z-index: 10;
@@ -595,6 +730,11 @@ ul li {
         left: 65px;
     }
 
+    .diffChecktip {
+        top: -18px;
+        left: 81px;
+    }
+
     @keyframes fadeIn {
         from {
             opacity: 0;
@@ -621,4 +761,25 @@ ul li {
     pointer-events: none;
     border: none;
 } */
+}
+
+@media (min-width:1300px) and (max-width:1500px) {
+
+    .dragCheck {
+        margin-left: 1em;
+    }
+
+    .modal-content {
+        width: 40%;
+    }
+
+    .close {
+        /* font-size: 35px; */
+        font-weight: normal;
+        color: #aaa;
+        top: -0.1em;
+        right: .15em;
+        cursor: pointer;
+        font-size: 2.5em;
+    }
 }

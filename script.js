@@ -10,8 +10,11 @@ const zoomValue = document.getElementById('zoom-value');
 const resetButton = document.querySelector('.reset');
 const dragToggleButton = document.getElementById('toggle-drag');
 const selectAllButton = document.getElementById('select-all-button');
+const diffCheckButton = document.getElementById('diffrent-check-button');
 const dragCheckText = document.getElementById('dragCheck');
 const helpMarker = document.querySelector('.help');
+
+const canvasContainer = document.getElementById("canvas-container");
 
 // ドラッグ機能の切り替え（ドラッグ切替ボタン）
 let isDragEnabled = true;
@@ -108,14 +111,11 @@ dropArea.addEventListener("drop", (e) => {
 
     const files = [...e.dataTransfer.files];
     let hasDuplicate = false;
-    let hasInvalidFormat = false;
-    const newFiles = [];
 
     files.forEach(file => {
         const fileType = file.type.split('/')[1];// ドロップ時に画像ファイルを読み込みBase64に変換して配列に保存
         if (!['png', 'svg+xml', 'webp', 'jpeg'].includes(fileType)) {
             alert("対応していない形式のファイルです。png、svg、webp、jpg形式の画像のみがサポートされています。");
-            hasInvalidFormat = true;
             return;
         }
 
@@ -128,16 +128,7 @@ dropArea.addEventListener("drop", (e) => {
             hasDuplicate = true;
             return;
         }
-        newFiles.push({ file, imgId });
-    });
 
-    // 一つでも重複があればアラートを出して、何も表示しない
-    if (hasDuplicate || hasInvalidFormat) {
-        alert("同じ名前の画像がすでに表示されています。別の名前に変更してください。");
-        return;
-    }
-
-    newFiles.forEach(({ file, imgId }) => {
         const imgURL = URL.createObjectURL(file);
         images.push({
             id: imgId,
@@ -146,19 +137,25 @@ dropArea.addEventListener("drop", (e) => {
             isAltColor: false,
             altColor: "#ddd"
         });
-
-        // ドロップ時にドラッグ機能を無効にする
-        isDragEnabled = true;
-        toggleImageDrag();
-        toggleLayerDrag();
-        dragToggleButton.style.backgroundColor = "#B2D3A5";
-        dragCheckText.textContent = "ドラッグ機能ON";
-        dragCheckText.style.backgroundColor = "#B2D3A5";
-
-        // 画像を表示
-        renderImages();
-        renderLayers();
     });
+
+    // 一つでも重複があればアラートを出して、何も表示しない
+    if (hasDuplicate) {
+        alert("同じ名前の画像がすでに表示されています。別の名前に変更してください。");
+        return;
+    }
+
+    // ドロップ時にドラッグ機能を無効にする
+    isDragEnabled = true;
+    toggleImageDrag();
+    toggleLayerDrag();
+    dragToggleButton.style.backgroundColor = "#B2D3A5";
+    dragCheckText.textContent = "ドラッグ機能ON";
+    dragCheckText.style.backgroundColor = "#B2D3A5";
+
+    // 画像を表示
+    renderImages();
+    renderLayers();
 });
 
 let selectedImage = null;
@@ -173,6 +170,7 @@ function updateButtonState() {
     resetButton.disabled = !isActive;
     dragToggleButton.disabled = !isActive;
     selectAllButton.disabled = !isActive;
+    diffCheckButton.disabled = !isActive;
 }
 
 // 画像表示（描画）関数
@@ -250,6 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const resetPopup = document.querySelector('.resettip');
     const dragTogglePopup = document.querySelector('.dragtip');
     const selectAllPopup = document.querySelector('.allSelecttip');
+    const diffCheckPopup = document.querySelector('.diffChecktip')
 
     resetButton.addEventListener('mouseover', () => {
         resetPopup.style.display = 'block';
@@ -273,6 +272,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     selectAllButton.addEventListener('mouseleave', () => {
         selectAllPopup.style.display = 'none';
+    });
+
+    diffCheckButton.addEventListener('mouseover', () => {
+        diffCheckPopup.style.display = 'block';
+    });
+
+    diffCheckButton.addEventListener('mouseleave', () => {
+        diffCheckPopup.style.display = 'none';
     });
 
     const helpButton = document.querySelector('.help');
@@ -564,6 +571,287 @@ selectAllButton.addEventListener('click', () => {
 
     toggleImageDrag();
     toggleLayerDrag();
+});
+
+diffCheckButton.addEventListener('click', () => {
+    const visibleImages = images.filter(img => img.visible);
+
+    if (visibleImages.length !== 2) {
+        alert("このボタンは２枚の画像の差分を確認するボタンです。画像を２枚だけ表示してください。");
+        return;
+    }
+
+    currentMode = "2-up";
+    showTwoUp();
+
+    // ラジオボタンの選択を "2-up" に戻す（視覚的にも）
+    document.querySelectorAll('input[name="modeChange"]').forEach(radio => {
+        const labelText = radio.parentElement.textContent.trim();
+        radio.checked = labelText === "2-up";
+    });
+
+    const pileUp = document.getElementById("pileUp");
+
+    const pileUpVisible = window.getComputedStyle(pileUp).display !== "none";
+    const canvasVisible = window.getComputedStyle(canvasContainer).display !== "none";
+
+    pileUp.style.display = pileUpVisible ? "none" : "flex";
+    canvasContainer.style.display = canvasVisible ? "none" : "block";
+
+    switchMode(currentMode);
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            pileUp.style.display = "flex";
+            canvasContainer.style.display = "none";
+        }
+    });
+});
+
+function drawImageToCanvas(canvas, imageUrl) {
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    img.onload = () => {
+        const dpr = window.devicePixelRatio || 1;
+        const displayWidth = canvas.clientWidth;
+        const displayHeight = canvas.clientHeight;
+
+        // 内部解像度をデバイスピクセル比に合わせて高精細化
+        canvas.width = displayWidth * dpr;
+        canvas.height = displayHeight * dpr;
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // transformをリセット
+        ctx.scale(dpr, dpr);
+
+        // 拡大禁止スケーリング
+        const scale = Math.min(
+            displayWidth / img.width,
+            displayHeight / img.height,
+            1
+        );
+
+        const drawWidth = img.width * scale;
+        const drawHeight = img.height * scale;
+        const offsetX = (displayWidth - drawWidth) / 2;
+        const offsetY = (displayHeight - drawHeight) / 2;
+
+        ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        ctx.drawImage(
+            img,
+            0, 0, img.width, img.height,
+            offsetX, offsetY, drawWidth, drawHeight
+        );
+    };
+    img.src = imageUrl;
+}
+
+function showTwoUp() {
+    const visibleImages = images.filter(img => img.visible);
+    if (visibleImages.length !== 2) return;
+
+    const canvas1 = document.getElementById("ccc1");
+    const canvas2 = document.getElementById("ccc2");
+
+    drawImageToCanvas(canvas1, visibleImages[0].url);
+    drawImageToCanvas(canvas2, visibleImages[1].url);
+}
+
+function showSwipe() {
+    const visibleImages = images.filter(img => img.visible);
+    if (visibleImages.length !== 2) return;
+
+    const canvas = document.getElementById("swipeCanvas");
+    const ctx = canvas.getContext("2d");
+    const slider = document.getElementById("swipeSlider");
+
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+
+    const imgA = new Image();
+    const imgB = new Image();
+
+    imgA.src = visibleImages[0].url;
+    imgB.src = visibleImages[1].url;
+
+    imgA.onload = () => {
+        imgB.onload = () => {
+            drawSwipeImages(canvas, imgA, imgB, slider.value);
+        };
+    };
+
+    slider.style.display = "block";
+
+    slider.oninput = () => {
+        drawSwipeImages(canvas, imgA, imgB, slider.value);
+    };
+}
+
+let onionSkinOpacity = 1;
+let imgA = null;
+let imgB = null;
+
+// onionSkinモードで画像を重ねて表示する関数
+function showOnionSkin() {
+    const visibleImages = images.filter(img => img.visible);
+    if (visibleImages.length !== 2) return;
+
+    const canvas = document.getElementById("onionSkinCanvas");
+
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+
+    // グローバル変数に画像を格納
+    imgA = new Image();
+    imgB = new Image();
+
+    imgA.src = visibleImages[0].url;
+    imgB.src = visibleImages[1].url;
+
+    imgA.onload = () => {
+        imgB.onload = () => {
+            drawOnionSkinImages(canvas, imgA, imgB);
+        };
+    };
+
+    document.getElementById("opacitySliderContainer").style.display = "block";
+}
+
+// Onion Skin表示用の描画関数
+function drawOnionSkinImages(canvas, imgA, imgB) {
+    const ctx = canvas.getContext("2d");
+
+    const scale = Math.min(
+        canvas.width / imgA.width,
+        canvas.height / imgA.height,
+        1
+    );
+
+    const drawWidth = imgA.width * scale;
+    const drawHeight = imgA.height * scale;
+    const offsetX = (canvas.width - drawWidth) / 2;
+    const offsetY = (canvas.height - drawHeight) / 2;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(imgA, 0, 0, imgA.width, imgA.height, offsetX, offsetY, drawWidth, drawHeight);
+
+    ctx.save();
+    ctx.globalAlpha = onionSkinOpacity;
+    ctx.drawImage(imgB, 0, 0, imgB.width, imgB.height, offsetX, offsetY, drawWidth, drawHeight);
+    ctx.restore();
+}
+
+// スライダーで不透明度を変更
+document.getElementById("opacitySlider").addEventListener("input", (e) => {
+    onionSkinOpacity = e.target.value / 100;
+
+    // 再描画のみ（画像読み込みなし）
+    const canvas = document.getElementById("onionSkinCanvas");
+    if (imgA && imgB) {
+        drawOnionSkinImages(canvas, imgA, imgB);
+    }
+});
+
+// モード変更時にonionSkinモードを呼び出す
+const modeChangeRadios = document.querySelectorAll('input[name="modeChange"]');
+modeChangeRadios.forEach(radio => {
+    radio.addEventListener('change', (event) => {
+        const mode = event.target.value;
+        if (mode === "onionSkin") {
+            const canvasArea = document.getElementById("canvas-area");
+            canvasArea.style.display = "flex";
+            showOnionSkin();
+        }
+    });
+});
+
+let swipeDrawWidth = 0;
+
+// スライダー位置に応じて画像を描画
+function drawSwipeImages(canvas, imgA, imgB, sliderValue) {
+    const ctx = canvas.getContext("2d");
+
+    const scale = Math.min(
+        canvas.width / imgA.width,
+        canvas.height / imgA.height,
+        1
+    );
+
+    const drawWidth = imgA.width * scale;
+    const drawHeight = imgA.height * scale;
+    const offsetX = (canvas.width - drawWidth) / 2;
+    const offsetY = (canvas.height - drawHeight) / 2;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 背景画像（画像A）
+    ctx.drawImage(imgA, 0, 0, imgA.width, imgA.height, offsetX, offsetY, drawWidth, drawHeight);
+
+    // 前面画像（画像B）をclipして表示
+    const clipX = offsetX + (drawWidth * (sliderValue / 100));
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(offsetX, offsetY, clipX - offsetX, drawHeight);
+    ctx.clip();
+
+    ctx.drawImage(imgB, 0, 0, imgB.width, imgB.height, offsetX, offsetY, drawWidth, drawHeight);
+    ctx.restore();
+}
+
+const modeRadios = document.querySelectorAll('input[name="modeChange"]');
+let currentMode = "2-up";
+
+modeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+        if (radio.checked) {
+            currentMode = radio.parentElement.textContent.trim();
+            switchMode(currentMode);
+        }
+    });
+});
+
+function switchMode(mode) {
+    const canvasArea = document.getElementById("canvas-area");
+    const twoUpContainer = document.getElementById("canvasTwoUp");
+    const swipeContainer = document.getElementById("canvasSwipe");
+    const sliderContainer = document.getElementById("swipeSliderContainer");
+    const opacitySliderContainer = document.getElementById("opacitySliderContainer");
+
+    // 一旦すべて非表示
+    twoUpContainer.style.display = "none";
+    swipeContainer.style.display = "none";
+    sliderContainer.style.display = "none";
+    onionSkinCanvas.style.display = "none";
+    opacitySliderContainer.style.display = "none";
+
+    if (mode === "2-up") {
+        canvasArea.style.display = "flex";
+        twoUpContainer.style.display = "flex";
+        document.getElementById("ccc1").style.display = "block";
+        document.getElementById("ccc2").style.display = "block";
+        showTwoUp();
+    } else if (mode === "swipe") {
+        canvasArea.style.display = "flex";
+        swipeContainer.style.display = "block";
+        sliderContainer.style.display = "block";
+        showSwipe();
+    } else if (mode === "onionSkin") {
+        canvasArea.style.display = "flex";
+        onionSkinCanvas.style.display = "block";
+        showOnionSkin();
+    }
+}
+
+const backPileUp = document.getElementById("backPileUpButton");
+backPileUp.addEventListener('click', () => {
+    const pileUp = document.getElementById("pileUp");
+
+    pileUp.style.display = "flex";
+    canvasContainer.style.display = "none";
 });
 
 layerMenu.addEventListener("dragover", (e) => {
