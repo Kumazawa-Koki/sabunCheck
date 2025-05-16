@@ -15,6 +15,8 @@ const dragCheckText = document.getElementById('dragCheck');
 const helpMarker = document.querySelector('.help');
 
 const canvasContainer = document.getElementById("canvas-container");
+const canvasZoomSlider = document.getElementById("canvasZoomSlider");
+const canvasZoomValue = document.getElementById("canvasZoomValue");
 
 // ドラッグ機能の切り替え（ドラッグ切替ボタン）
 let isDragEnabled = true;
@@ -582,21 +584,24 @@ diffCheckButton.addEventListener('click', () => {
     }
 
     currentMode = "2-up";
-    showTwoUp();
 
-    // ラジオボタンの選択を "2-up" に戻す（視覚的にも）
     document.querySelectorAll('input[name="modeChange"]').forEach(radio => {
         const labelText = radio.parentElement.textContent.trim();
         radio.checked = labelText === "2-up";
     });
 
     const pileUp = document.getElementById("pileUp");
-
     const pileUpVisible = window.getComputedStyle(pileUp).display !== "none";
     const canvasVisible = window.getComputedStyle(canvasContainer).display !== "none";
 
     pileUp.style.display = pileUpVisible ? "none" : "flex";
     canvasContainer.style.display = canvasVisible ? "none" : "block";
+
+    const opacitySlider = document.getElementById("opacitySlider");
+    const swipeSlider = document.getElementById("swipeSlider");
+    opacitySlider.value = 100;
+    onionSkinOpacity = 1;
+    swipeSlider.value = 100;
 
     switchMode(currentMode);
 
@@ -608,22 +613,15 @@ diffCheckButton.addEventListener('click', () => {
     });
 });
 
-function drawImageToCanvas(canvas, imageUrl) {
-    const ctx = canvas.getContext("2d");
+function drawImageToCanvas(div, imageUrl) {
+    div.innerHTML = "";
     const img = new Image();
 
     img.onload = () => {
-        const dpr = window.devicePixelRatio || 1;
-        const displayWidth = canvas.clientWidth;
-        const displayHeight = canvas.clientHeight;
+        const displayWidth = div.clientWidth;
+        const displayHeight = div.clientHeight;
 
         // 内部解像度をデバイスピクセル比に合わせて高精細化
-        canvas.width = displayWidth * dpr;
-        canvas.height = displayHeight * dpr;
-        ctx.setTransform(1, 0, 0, 1, 0, 0); // transformをリセット
-        ctx.scale(dpr, dpr);
-
-        // 拡大禁止スケーリング
         const scale = Math.min(
             displayWidth / img.width,
             displayHeight / img.height,
@@ -635,16 +633,13 @@ function drawImageToCanvas(canvas, imageUrl) {
         const offsetX = (displayWidth - drawWidth) / 2;
         const offsetY = (displayHeight - drawHeight) / 2;
 
-        ctx.clearRect(0, 0, displayWidth, displayHeight);
+        img.style.width = `${drawWidth}px`;
+        img.style.height = `${drawHeight}px`;
+        img.style.position = 'absolute';
+        img.style.left = `${offsetX}px`;
+        img.style.top = `${offsetY}px`;
 
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-
-        ctx.drawImage(
-            img,
-            0, 0, img.width, img.height,
-            offsetX, offsetY, drawWidth, drawHeight
-        );
+        div.appendChild(img);
     };
     img.src = imageUrl;
 }
@@ -653,23 +648,20 @@ function showTwoUp() {
     const visibleImages = images.filter(img => img.visible);
     if (visibleImages.length !== 2) return;
 
-    const canvas1 = document.getElementById("ccc1");
-    const canvas2 = document.getElementById("ccc2");
+    const div1 = document.getElementById("ccc1");
+    const div2 = document.getElementById("ccc2");
 
-    drawImageToCanvas(canvas1, visibleImages[0].url);
-    drawImageToCanvas(canvas2, visibleImages[1].url);
+    // div内に画像を描画
+    drawImageToCanvas(div1, visibleImages[0].url);
+    drawImageToCanvas(div2, visibleImages[1].url);
 }
 
 function showSwipe() {
     const visibleImages = images.filter(img => img.visible);
     if (visibleImages.length !== 2) return;
 
-    const canvas = document.getElementById("swipeCanvas");
-    const ctx = canvas.getContext("2d");
-    const slider = document.getElementById("swipeSlider");
-
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
+    const div = document.getElementById("swipeCanvas");
+    div.innerHTML = "";
 
     const imgA = new Image();
     const imgB = new Image();
@@ -679,69 +671,114 @@ function showSwipe() {
 
     imgA.onload = () => {
         imgB.onload = () => {
-            drawSwipeImages(canvas, imgA, imgB, slider.value);
+            drawSwipeImages(div, imgA, imgB, swipeSlider.value);
         };
     };
 
-    slider.style.display = "block";
-
-    slider.oninput = () => {
-        drawSwipeImages(canvas, imgA, imgB, slider.value);
+    swipeSlider.style.display = "block";
+    swipeSlider.oninput = () => {
+        drawSwipeImages(div, imgA, imgB, swipeSlider.value);
     };
 }
 
-let onionSkinOpacity = 1;
-let imgA = null;
-let imgB = null;
+// スライダー位置に応じて画像を描画
+function drawSwipeImages(div, imgA, imgB, sliderValue) {
+    const scale = Math.min(
+        div.clientWidth / imgA.width,
+        div.clientHeight / imgA.height,
+        1
+    );
+
+    const drawWidth = imgA.width * scale;
+    const drawHeight = imgA.height * scale;
+    const offsetX = (div.clientWidth - drawWidth) / 2;
+    const offsetY = (div.clientHeight - drawHeight) / 2;
+
+    // 画像Aのスタイル
+    imgA.style.position = 'absolute';
+    imgA.style.left = `${offsetX}px`;
+    imgA.style.top = `${offsetY}px`;
+    imgA.style.width = `${drawWidth}px`;
+    imgA.style.height = `${drawHeight}px`;
+    imgA.style.zIndex = 1;
+
+    // 画像Bのスタイル
+    imgB.style.position = 'absolute';
+    imgB.style.left = `${offsetX}px`;
+    imgB.style.top = `${offsetY}px`;
+    imgB.style.width = `${drawWidth}px`;
+    imgB.style.height = `${drawHeight}px`;
+    imgB.style.zIndex = 2;
+
+    // clip-path を使って画像Bを右から左にスライド表示
+    const percentage = sliderValue;
+    imgB.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`; // 上 右 下 左（％）
+
+    // 初回のみ追加（同じ画像を何度も追加しない）
+    if (!div.contains(imgA)) div.appendChild(imgA);
+    if (!div.contains(imgB)) div.appendChild(imgB);
+}
 
 // onionSkinモードで画像を重ねて表示する関数
 function showOnionSkin() {
     const visibleImages = images.filter(img => img.visible);
     if (visibleImages.length !== 2) return;
 
-    const canvas = document.getElementById("onionSkinCanvas");
+    const div = document.getElementById("onionSkinCanvas");
+    div.innerHTML = "";
 
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
+    const sliderContainer = document.getElementById("opacitySliderContainer");
+    sliderContainer.style.display = "block";  // スライダー表示
 
-    // グローバル変数に画像を格納
-    imgA = new Image();
-    imgB = new Image();
+    const imgA = new Image();
+    const imgB = new Image();
 
     imgA.src = visibleImages[0].url;
     imgB.src = visibleImages[1].url;
 
     imgA.onload = () => {
         imgB.onload = () => {
-            drawOnionSkinImages(canvas, imgA, imgB);
+            if (!div.contains(imgA)) {
+                drawOnionSkinImages(div, imgA, imgB);
+            }
         };
     };
-
-    document.getElementById("opacitySliderContainer").style.display = "block";
 }
 
 // Onion Skin表示用の描画関数
-function drawOnionSkinImages(canvas, imgA, imgB) {
-    const ctx = canvas.getContext("2d");
-
+function drawOnionSkinImages(div, imgA, imgB) {
     const scale = Math.min(
-        canvas.width / imgA.width,
-        canvas.height / imgA.height,
+        div.clientWidth / imgA.width,
+        div.clientHeight / imgA.height,
         1
     );
 
     const drawWidth = imgA.width * scale;
     const drawHeight = imgA.height * scale;
-    const offsetX = (canvas.width - drawWidth) / 2;
-    const offsetY = (canvas.height - drawHeight) / 2;
+    const offsetX = (div.clientWidth - drawWidth) / 2;
+    const offsetY = (div.clientHeight - drawHeight) / 2;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(imgA, 0, 0, imgA.width, imgA.height, offsetX, offsetY, drawWidth, drawHeight);
+    // 画像Aのスタイル
+    imgA.style.position = 'absolute';
+    imgA.style.left = `${offsetX}px`;
+    imgA.style.top = `${offsetY}px`;
+    imgA.style.width = `${drawWidth}px`;
+    imgA.style.height = `${drawHeight}px`;
+    imgA.style.zIndex = 1;
 
-    ctx.save();
-    ctx.globalAlpha = onionSkinOpacity;
-    ctx.drawImage(imgB, 0, 0, imgB.width, imgB.height, offsetX, offsetY, drawWidth, drawHeight);
-    ctx.restore();
+    // 画像Bのスタイル
+    imgB.style.position = 'absolute';
+    imgB.style.left = `${offsetX}px`;
+    imgB.style.top = `${offsetY}px`;
+    imgB.style.width = `${drawWidth}px`;
+    imgB.style.height = `${drawHeight}px`;
+    imgB.style.zIndex = 2;
+
+    // 画像AとBがすでにdivに存在するか確認し、存在しなければ追加
+    if (!div.contains(imgA)) div.appendChild(imgA);
+    if (!div.contains(imgB)) div.appendChild(imgB);
+
+    imgB.style.opacity = onionSkinOpacity;
 }
 
 // スライダーで不透明度を変更
@@ -749,58 +786,57 @@ document.getElementById("opacitySlider").addEventListener("input", (e) => {
     onionSkinOpacity = e.target.value / 100;
 
     // 再描画のみ（画像読み込みなし）
-    const canvas = document.getElementById("onionSkinCanvas");
+    const div = document.getElementById("onionSkinCanvas");
+    const imgA = div.querySelector('img:nth-child(1)');
+    const imgB = div.querySelector('img:nth-child(2)');
+
     if (imgA && imgB) {
-        drawOnionSkinImages(canvas, imgA, imgB);
+        imgB.style.opacity = onionSkinOpacity;
     }
 });
 
-// モード変更時にonionSkinモードを呼び出す
-const modeChangeRadios = document.querySelectorAll('input[name="modeChange"]');
-modeChangeRadios.forEach(radio => {
-    radio.addEventListener('change', (event) => {
-        const mode = event.target.value;
-        if (mode === "onionSkin") {
-            const canvasArea = document.getElementById("canvas-area");
-            canvasArea.style.display = "flex";
-            showOnionSkin();
-        }
-    });
-});
+// function loadImage(url) {
+//     return new Promise((resolve) => {
+//         const img = new Image();
+//         img.crossOrigin = "anonymous";
+//         img.src = url;
+//         img.onload = () => resolve(img);
+//     });
+// }
 
-let swipeDrawWidth = 0;
+// async function showPixelDiff() {
+//     const visibleImages = images.filter(img => img.visible);
+//     if (visibleImages.length !== 2) {
+//         console.warn("2枚の画像が表示状態である必要があります。");
+//         return;
+//     }
 
-// スライダー位置に応じて画像を描画
-function drawSwipeImages(canvas, imgA, imgB, sliderValue) {
-    const ctx = canvas.getContext("2d");
+//     const sabunCanvas = document.getElementById("sabunCanvas");
+//     sabunCanvas.innerHTML = "";
 
-    const scale = Math.min(
-        canvas.width / imgA.width,
-        canvas.height / imgA.height,
-        1
-    );
+//     const [img1, img2] = await Promise.all([
+//         loadImage(visibleImages[0].url),
+//         loadImage(visibleImages[1].url)
+//     ]);
 
-    const drawWidth = imgA.width * scale;
-    const drawHeight = imgA.height * scale;
-    const offsetX = (canvas.width - drawWidth) / 2;
-    const offsetY = (canvas.height - drawHeight) / 2;
+//     const style = {
+//         position: "absolute",
+//         top: "0",
+//         left: "0",
+//         width: "100%",
+//         height: "100%",
+//         objectFit: "contain"
+//     };
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+//     Object.assign(img1.style, style);
+//     Object.assign(img2.style, style);
+//     img2.style.mixBlendMode = "difference";
 
-    // 背景画像（画像A）
-    ctx.drawImage(imgA, 0, 0, imgA.width, imgA.height, offsetX, offsetY, drawWidth, drawHeight);
-
-    // 前面画像（画像B）をclipして表示
-    const clipX = offsetX + (drawWidth * (sliderValue / 100));
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(offsetX, offsetY, clipX - offsetX, drawHeight);
-    ctx.clip();
-
-    ctx.drawImage(imgB, 0, 0, imgB.width, imgB.height, offsetX, offsetY, drawWidth, drawHeight);
-    ctx.restore();
-}
+//     // ddd3 に2枚の画像を重ねて追加（img2が上）
+//     sabunCanvas.style.position = "relative";
+//     sabunCanvas.appendChild(img1);
+//     sabunCanvas.appendChild(img2);
+// }
 
 const modeRadios = document.querySelectorAll('input[name="modeChange"]');
 let currentMode = "2-up";
@@ -818,6 +854,12 @@ function switchMode(mode) {
     const canvasArea = document.getElementById("canvas-area");
     const twoUpContainer = document.getElementById("canvasTwoUp");
     const swipeContainer = document.getElementById("canvasSwipe");
+    const sabunContainer = document.getElementById("canvasSabun");
+
+    const swipeCanvas = document.getElementById("swipeCanvas");
+    const onionSkinCanvas = document.getElementById("onionSkinCanvas");
+    const sabunCanvas = document.getElementById("sabunCanvas");
+
     const sliderContainer = document.getElementById("swipeSliderContainer");
     const opacitySliderContainer = document.getElementById("opacitySliderContainer");
 
@@ -825,24 +867,36 @@ function switchMode(mode) {
     twoUpContainer.style.display = "none";
     swipeContainer.style.display = "none";
     sliderContainer.style.display = "none";
+    // sabunContainer.style.display = "none";
+    swipeCanvas.style.display = "none";
     onionSkinCanvas.style.display = "none";
     opacitySliderContainer.style.display = "none";
+    sabunCanvas.style.display = "none";
 
     if (mode === "2-up") {
         canvasArea.style.display = "flex";
         twoUpContainer.style.display = "flex";
         document.getElementById("ccc1").style.display = "block";
         document.getElementById("ccc2").style.display = "block";
-        showTwoUp();
+        requestAnimationFrame(() => {
+            showTwoUp();
+        });
     } else if (mode === "swipe") {
         canvasArea.style.display = "flex";
         swipeContainer.style.display = "block";
+        swipeCanvas.style.display = "block";
         sliderContainer.style.display = "block";
         showSwipe();
     } else if (mode === "onionSkin") {
         canvasArea.style.display = "flex";
         onionSkinCanvas.style.display = "block";
+        opacitySliderContainer.style.display = "block";
         showOnionSkin();
+    } else if (mode === "sabun") {
+        canvasArea.style.display = "flex";
+        sabunCanvas.style.display = "block";
+        // sabunContainer.style.display = "block";
+        showPixelDiff();
     }
 }
 

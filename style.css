@@ -29,7 +29,6 @@ ul li {
     width: 75%;
     height: 100vh;
     background-color: #cdd;
-    margin-right: 10px solid #333;
 }
 
 #drop-area img {
@@ -386,7 +385,11 @@ ul li {
     overflow: hidden;
 }
 
-#canvas-area canvas {
+#ccc1,
+#ccc2,
+#swipeCanvas,
+#onionSkinCanvas,
+#sabunCanvas {
     margin: 0 10px;
     /* background-color: #add; */
 }
@@ -394,10 +397,29 @@ ul li {
 #ccc1,
 #ccc2 {
     display: none;
+    position: relative;
     width: 50vw;
     height: 88vh;
     z-index: 10;
     background-color: #cdd;
+}
+
+#swipeCanvas,
+#onionSkinCanvas {
+    display: block;
+    position: absolute;
+    width: 100vw;
+    height: 88vh;
+    top: 0;
+    left: 0;
+}
+
+#sabunCanvas {
+    width: 100%;
+    height: 88vh;
+    position: relative;
+    overflow: hidden;
+    z-index: 20;
 }
 
 #canvas-bottom {
@@ -406,26 +428,6 @@ ul li {
     display: block;
     position: relative;
     background-color: #ddd;
-}
-
-#swipeCanvas {
-    display: block;
-    position: absolute;
-    width: 100vw;
-    height: 88vh;
-    top: 0;
-    left: 0;
-    z-index: 5;
-}
-
-#onionSkinCanvas {
-    display: block;
-    position: absolute;
-    width: 100vw;
-    height: 88vh;
-    top: 0;
-    left: 0;
-    z-index: 5;
 }
 
 #swipeSliderContainer {
@@ -445,7 +447,7 @@ ul li {
 
 #opacitySliderContainer {
     position: absolute;
-    bottom: 10px;
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
