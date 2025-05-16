@@ -10,6 +10,7 @@
 </head>
 
 <body>
+    <!-- 最初に出す警告文 -->
     <div class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -47,13 +48,33 @@
                     <label><input type="radio" name="modeChange" value="2-up" checked>2-up</label>
                     <label><input type="radio" name="modeChange" value="swipe">swipe</label>
                     <label><input type="radio" name="modeChange" value="onionSkin">onionSkin</label>
-                    <!-- <label><input type="radio" name="modeChange" value="sabun">sabun</label> -->
                 </div>
             </div>
 
+            <div id="canvasHelpOverlay">
+                <div id="canvasHelpPopup">
+                    <h3>機能説明＆ショートカットキー</h3>
+                    <ul>
+                        <li><span class="cancvas-help-code">2-up</span>２枚の画像を並べて比較表示します。</li>
+                        <li><span class="cancvas-help-code">swipe</span>スライダーを動かして表示領域を調整できます。</li>
+                        <li><span class="cancvas-help-code">onionSkin</span>２枚の画像を重ねて片方の画像を透明表示できます。</li>
+                        <br>
+                        <li><span class="cancvas-help-code">「Shift」+「スクロール」</span><span>横にスクロール</span></li>
+                        <li><span class="cancvas-help-code">「ctrl」+「0」</span><span>ズームリセット</span></li>
+                        <li><span class="cancvas-help-code">「ctrl」+「→」</span><span>ズームイン</span></li>
+                        <li><span class="cancvas-help-code">「ctrl」+「←」</span><span>ズームアウト</span></li>
+                    </ul>
+                    <button id="closeCanvasHelp">&times;</button>
+                </div>
+            </div>
+
+            <button id="canvasHelpButton">&#63;</button>
+
             <div id="expTogetherContainer">
-                <span>このスイッチをＯＮにすると、拡大後に左右の画像の描画位置が同期します。<br>
-                ＯＦＦにすると左右はバラバラに動きます。</span>
+                <span>
+                    このスイッチをＯＮにすると、拡大後に左右の画像の描画位置が同期します。<br>
+                    ＯＦＦにすると左右はバラバラに動きます。
+                </span>
                 <label id="expTogether-button">
                     <input type="checkbox" id="expTogetherToggle">
                 </label>
@@ -94,7 +115,6 @@
 
                 <p class="resettip">リセット</p>
                 <button class="reset">&#x27F3;</button>
-                <!-- <button class="reset">&#x23f3;</button> -->
 
                 <p class="dragtip">ドラッグ<br>機能切替</p>
                 <button id="toggle-drag">&#x296E;</button>
@@ -107,14 +127,15 @@
 
                 <p id="dragCheck" class="dragCheck">ドラッグ機能ON</p>
 
-                <p class="help">？</p>
+                <p class="help">&#63;</p>
             </div>
         </div>
         <div id="help-modal" class="help-modal hidden">
             <div class="help-modal-content">
                 <span class="help-close-btn">&times;</span>
-                <h2>ショートカット一覧</h2>
+                <h2>機能説明＆ショートカット一覧</h2>
                 <ul>
+                    <li><span class="code">「Shift」+「スクロール」</span><span class="code-sentence">横にスクロール</span></li>
                     <li><span class="code">「ctrl」+「0」</span><span class="code-sentence">ズームリセット</span></li>
                     <li><span class="code">「ctrl」+「→」</span><span class="code-sentence">ズームイン</span></li>
                     <li><span class="code">「ctrl」+「←」</span><span class="code-sentence">ズームアウト</span></li>

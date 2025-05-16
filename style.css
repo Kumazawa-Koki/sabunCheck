@@ -164,7 +164,6 @@ ul li {
 }
 
 .reset {
-    /* position: relative; */
     color: #fff;
     background-color: #ff5555;
 }
@@ -174,13 +173,11 @@ ul li {
 }
 
 #toggle-drag {
-    /* position: relative; */
     color: #000;
     background-color: #B2D3A5;
 }
 
 #select-all-button {
-    /* position: relative; */
     color: #fff;
     background-color: #934fa8;
 }
@@ -202,7 +199,9 @@ ul li {
     border: none;
     cursor: pointer;
     font-size: 16px;
+    width: 17px;
     height: 17px;
+    text-align: center;
     margin-top: .3em;
     margin-left: .5em;
     font-weight: bold;
@@ -342,7 +341,7 @@ ul li {
 
 .code {
     display: inline-flex;
-    width: 8em;
+    width: 12em;
 }
 
 .code-sentence {
@@ -386,26 +385,16 @@ ul li {
     overflow: hidden;
 }
 
-/* #canvasTwoUp, */
 #ccc1,
 #ccc2,
 #canvasSwipe,
 #canvasOnionSkin,
 #canvasSabun {
     overflow: scroll;
-    /* position: relative; */
 }
 
-#ccc1,
-#ccc2 {
-    /* margin: 0 10px; */
-    /* background-color: #add; */
-}
-
-#swipeCanvas,
-#onionSkinCanvas,
-#sabunCanvas {
-    /* background-color: #add; */
+#ccc1 {
+    border-right: 2px dashed #aaa;
 }
 
 #ccc1,
@@ -437,7 +426,6 @@ ul li {
 }
 
 #canvas-bottom {
-    /* border-top: 10px solid #cdd; */
     height: 10vh;
     width: 100vw;
     display: block;
@@ -571,7 +559,6 @@ ul li {
     box-shadow: 0 0 5px rgb(0 0 0 / 20%);
     background-color: #fff;
     content: '';
-    /* transition: left .4s; */
 }
 
 #expTogether-button:has(:checked)::after {
@@ -582,12 +569,64 @@ ul li {
     display: none;
 }
 
+#canvasHelpButton {
+    position: absolute;
+    left: 250px;
+    top: 10px;
+    font-weight: bold;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+#canvasHelpOverlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#canvasHelpPopup {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px 5px;
+    max-width: 660px;
+    width: 90%;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+#canvasHelpPopup h3 {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.cancvas-help-code {
+    display: inline-flex;
+    width: 13em;
+}
+
+#closeCanvasHelp {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
 /* Firefoxのみ対応させる */
 @-moz-document url-prefix() {
     * {
         margin: 0;
         box-sizing: border-box;
-        /* border: 1px solid #333; */
     }
 
     body {
@@ -666,7 +705,6 @@ ul li {
 
     .layer-item {
         position: relative;
-        /* top: .6em; */
         padding: 10px 0;
         border: 1px solid #ddd;
         cursor: pointer;
@@ -674,27 +712,13 @@ ul li {
 
     .layer-item .dragging {
         opacity: 0.5;
-        /* position: relative; */
         z-index: 1000;
     }
 
     .layer-item span {
         user-select: none;
         margin-left: 1em;
-        /* color: #e0a49b; */
     }
-
-    /* .drag-handle {
-    position: absolute;
-    margin: auto 0;
-    right: .5em;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.2em;
-    display: inline-block;
-    width: 1.2em;
-    text-align: center;
-} */
 
     .ui {
         position: fixed;
@@ -707,10 +731,7 @@ ul li {
     }
 
     #slider-container {
-        /* position: relative; */
         display: flex;
-        /* align-items: center; */
-        /* width: 100%; */
     }
 
     .button-container {
@@ -743,7 +764,6 @@ ul li {
         line-height: 0.8;
         padding: 2px;
         border-radius: 5px;
-        /* margin-top: 1px; */
         margin-left: 10px;
         font-weight: bold;
         width: 22px;
@@ -751,7 +771,6 @@ ul li {
     }
 
     .reset {
-        /* position: relative; */
         color: #fff;
         background-color: #ff5555;
     }
@@ -761,13 +780,11 @@ ul li {
     }
 
     #toggle-drag {
-        /* position: relative; */
         color: #000;
         background-color: #B2D3A5;
     }
 
     #select-all-button {
-        /* position: relative; */
         color: #fff;
         background-color: #934fa8;
         font-size: 18px;
@@ -848,22 +865,13 @@ ul li {
         }
     }
 
-    /* .opacitytip {
-    display: block;
-    position: absolute;
-    top: -6.5em;
-    left: 59.5em;
-    z-index: 10;
-    background: #545454;
-    padding: 1em;
-    font-size: 0.1rem;
-    line-height: 1;
-    animation: fadeIn 0.6s;
-    color: #fff;
-    border-radius: 3px;
-    pointer-events: none;
-    border: none;
-} */
+    #zoomSliderContainer {
+        margin-top: 15px;
+        margin-left: 10px;
+        display: flex;
+        width: 280px;
+        z-index: 50;
+    }
 }
 
 @media (min-width:1200px) and (max-width:1500px) {
@@ -877,7 +885,6 @@ ul li {
     }
 
     .close {
-        /* font-size: 35px; */
         font-weight: normal;
         color: #aaa;
         top: -0.1em;
@@ -934,7 +941,6 @@ ul li {
         display: none;
         position: relative;
         width: 50vw;
-        /* height: 85vh; */
         z-index: 10;
         background-color: #cdd;
     }

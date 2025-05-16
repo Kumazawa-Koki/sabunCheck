@@ -115,7 +115,7 @@ dropArea.addEventListener("drop", (e) => {
     let hasDuplicate = false;
 
     files.forEach(file => {
-        const fileType = file.type.split('/')[1];// ドロップ時に画像ファイルを読み込みBase64に変換して配列に保存
+        const fileType = file.type.split('/')[1]; // ドロップ時に画像ファイルを読み込みBase64に変換して配列に保存
         if (!['png', 'svg+xml', 'webp', 'jpeg'].includes(fileType)) {
             alert("対応していない形式のファイルです。png、svg、webp、jpg形式の画像のみがサポートされています。");
             return;
@@ -180,7 +180,7 @@ function renderImages() {
     const scrollLeft = dropArea.scrollLeft;
     const scrollTop = dropArea.scrollTop;
 
-    dropArea.innerHTML = "";// ドロップエリアを空にして全画像を一から描画し直す
+    dropArea.innerHTML = ""; // ドロップエリアを空にして全画像を一から描画し直す
     dropArea.style.position = "relative";
 
     images.forEach(img => {
@@ -441,10 +441,8 @@ function renderLayers() {
 
             if (targetImg) {
                 targetImg.visible = !isSelected;
-                // renderImages();
             }
 
-            // images[index].visible = !isSelected; // このコードが画像とlayer-itemの整合性をずらしてたっぽい（詳しく原因を見てみる）
             renderImages();
 
             dropArea.scrollLeft = savedScrollLeft;
@@ -587,6 +585,8 @@ diffCheckButton.addEventListener('click', () => {
         return;
     }
 
+    document.getElementById("canvasHelpOverlay").style.display = "none";
+
     currentMode = "2-up";
 
     document.querySelectorAll('input[name="modeChange"]').forEach(radio => {
@@ -669,7 +669,6 @@ function showTwoUp() {
 }
 
 function showSwipe() {
-    // canvasZoomLevel = 0;
     const visibleImages = images.filter(img => img.visible);
     if (visibleImages.length !== 2) return;
 
@@ -739,7 +738,6 @@ function drawSwipeImages(div, imgA, imgB, sliderValue) {
 
 // onionSkinモードで画像を重ねて表示する関数
 function showOnionSkin() {
-    // canvasZoomLevel = 0;
     const visibleImages = images.filter(img => img.visible);
     if (visibleImages.length !== 2) return;
 
@@ -1010,9 +1008,26 @@ function switchMode(mode) {
         opacitySliderContainer.style.display = "block";
         showOnionSkin();
     }
-
     updateVisibleCanvasOverflow();
 }
+
+const canvasHelpButton = document.getElementById('canvasHelpButton');
+const canvasHelpOverlay = document.getElementById('canvasHelpOverlay');
+const closeCanvasHelp = document.getElementById('closeCanvasHelp');
+
+canvasHelpButton.addEventListener('click', () => {
+    canvasHelpOverlay.style.display = 'flex';
+});
+
+closeCanvasHelp.addEventListener('click', () => {
+    canvasHelpOverlay.style.display = 'none';
+});
+
+canvasHelpOverlay.addEventListener('click', (e) => {
+    if (e.target === canvasHelpOverlay) {
+        canvasHelpOverlay.style.display = 'none';
+    }
+});
 
 const backPileUp = document.getElementById("backPileUpButton");
 backPileUp.addEventListener('click', () => {
@@ -1049,7 +1064,6 @@ function getDragAfterElement(container, y) {
 // 画像順の更新
 function updateImageOrder() {
     const newOrder = [...layerMenu.querySelectorAll(".layer-item")].map(el => el.getAttribute("data-id"));
-    // images.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
     images.sort((a, b) => newOrder.indexOf(String(a.id)) - newOrder.indexOf(String(b.id)));
     renderImages();
 }
