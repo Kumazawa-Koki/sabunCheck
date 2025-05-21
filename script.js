@@ -603,6 +603,8 @@ function drawImageToCanvas(div, imageUrl) {
         const drawWidth = img.width * initialScale;
         const drawHeight = img.height * initialScale;
 
+        img.style.maxWidth = "95%";
+        img.style.maxHeight = "95%";
         img.style.objectFit = "contain";
         img.style.position = "absolute";
         img.style.top = "0";
@@ -673,23 +675,31 @@ function drawSwipeImages(div, imgA, imgB, sliderValue) {
 
     const drawWidth = imgA.width * scale;
     const drawHeight = imgA.height * scale;
-    const offsetX = (div.clientWidth - drawWidth) / 2;
-    const offsetY = (div.clientHeight - drawHeight) / 2;
+    // const offsetX = (div.clientWidth - drawWidth) / 2;
+    // const offsetY = (div.clientHeight - drawHeight) / 2;
 
     // 画像Aのスタイル
-    imgA.style.position = 'absolute';
-    imgA.style.left = `${offsetX}px`;
-    imgA.style.top = `${offsetY}px`;
-    imgA.style.width = `${drawWidth}px`;
-    imgA.style.height = `${drawHeight}px`;
+    imgA.style.maxWidth = "95%";
+    imgA.style.maxHeight = "95%";
+    imgA.style.objectFit = "contain";
+    imgA.style.position = "absolute";
+    imgA.style.top = "0";
+    imgA.style.left = "0";
+    imgA.style.right = "0";
+    imgA.style.bottom = "0";
+    imgA.style.margin = "auto";
     imgA.style.zIndex = 1;
 
     // 画像Bのスタイル
-    imgB.style.position = 'absolute';
-    imgB.style.left = `${offsetX}px`;
-    imgB.style.top = `${offsetY}px`;
-    imgB.style.width = `${drawWidth}px`;
-    imgB.style.height = `${drawHeight}px`;
+    imgB.style.maxWidth = "95%";
+    imgB.style.maxHeight = "95%";
+    imgB.style.objectFit = "contain";
+    imgB.style.position = "absolute";
+    imgB.style.top = "0";
+    imgB.style.left = "0";
+    imgB.style.right = "0";
+    imgB.style.bottom = "0";
+    imgB.style.margin = "auto";
     imgB.style.zIndex = 2;
 
     // clip-path を使って画像Bを右から左にスライド表示
@@ -742,23 +752,31 @@ function drawOnionSkinImages(div, imgA, imgB) {
 
     const drawWidth = imgA.width * scale;
     const drawHeight = imgA.height * scale;
-    const offsetX = (div.clientWidth - drawWidth) / 2;
-    const offsetY = (div.clientHeight - drawHeight) / 2;
+    // const offsetX = (div.clientWidth - drawWidth) / 2;
+    // const offsetY = (div.clientHeight - drawHeight) / 2;
 
     // 画像Aのスタイル
-    imgA.style.position = 'absolute';
-    imgA.style.left = `${offsetX}px`;
-    imgA.style.top = `${offsetY}px`;
-    imgA.style.width = `${drawWidth}px`;
-    imgA.style.height = `${drawHeight}px`;
+    imgA.style.maxWidth = "95%";
+    imgA.style.maxHeight = "95%";
+    imgA.style.objectFit = "contain";
+    imgA.style.position = "absolute";
+    imgA.style.top = "0";
+    imgA.style.left = "0";
+    imgA.style.right = "0";
+    imgA.style.bottom = "0";
+    imgA.style.margin = "auto";
     imgA.style.zIndex = 1;
 
     // 画像Bのスタイル
-    imgB.style.position = 'absolute';
-    imgB.style.left = `${offsetX}px`;
-    imgB.style.top = `${offsetY}px`;
-    imgB.style.width = `${drawWidth}px`;
-    imgB.style.height = `${drawHeight}px`;
+    imgB.style.maxWidth = "95%";
+    imgB.style.maxHeight = "95%";
+    imgB.style.objectFit = "contain";
+    imgB.style.position = "absolute";
+    imgB.style.top = "0";
+    imgB.style.left = "0";
+    imgB.style.right = "0";
+    imgB.style.bottom = "0";
+    imgB.style.margin = "auto";
     imgB.style.zIndex = 2;
 
     // 画像AとBがすでにdivに存在するか確認し、存在しなければ追加
@@ -831,7 +849,7 @@ function updateCanvasZoom() {
         img.style.width = `${baseSize.width}px`;
         img.style.height = `${baseSize.height}px`;
 
-        img.style.position = 'absolute';
+        // img.style.position = 'absolute';
     });
 }
 
