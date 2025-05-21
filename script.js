@@ -40,14 +40,22 @@ function toggleImageDrag() {
 // レイヤーメニューのドラッグ切り替え
 function toggleLayerDrag() {
     const layerEls = layerMenu.querySelectorAll('.layer-item');
+
     layerEls.forEach(layerEl => {
+        const id = layerEl.getAttribute("data-id");
+        const img = images.find(img => img.id === id);
+        if (!img) return;
+
         layerEl.setAttribute('draggable', isDragEnabled ? 'true' : 'false');
 
         // レイヤーメニューがドラッグ可能か不可能かでUIの色を変更している
-        if (!isDragEnabled) {
-            layerEl.style.backgroundColor = layerEl.getAttribute("data-selected") === "true" ? "#8BB174" : "#999";
+        if (img.locked) {
+            layerEl.style.backgroundColor = img.visible ? "#e35b5b" : "#c7a3a3";
         } else {
-            layerEl.style.backgroundColor = layerEl.getAttribute("data-selected") === "true" ? "#B2D3A5" : "#ccc";
+            const isSelected = layerEl.getAttribute("data-selected") === "true";
+            layerEl.style.backgroundColor = isDragEnabled
+                ? (isSelected ? "#B2D3A5" : "#ccc")
+                : (isSelected ? "#8BB174" : "#999");
         }
     });
 }
@@ -136,6 +144,7 @@ dropArea.addEventListener("drop", (e) => {
             id: imgId,
             url: imgURL,
             visible: true,
+            locked: false,
             isAltColor: false,
             altColor: "#ddd"
         });
@@ -213,9 +222,6 @@ function renderImages() {
     });
 }
 
-let isOpacityChanging = false; // opacityButtonのクリックでONOFFが切り替わる
-let initialOpacity = {};
-
 // ページのDOM（Document Object Model）が完全に読み込まれた時に実行されるコード
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -228,23 +234,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // ×ボタンをクリックでモーダルを非表示
     closeBtn.addEventListener('click', () => {
         modal.style.display = 'none';
-    });
-
-    // dropareaで「ドロップ」イベントが発生した時に実行される
-    dropArea.addEventListener("drop", (event) => {
-        event.preventDefault();
-        document.querySelectorAll('.opacity-item').forEach(item => {
-            item.addEventListener('click', function () {
-                let imgId = this.dataset.id;
-                let img = document.querySelector(`img[data-id="${imgId}"]`);
-
-                if (img) {
-                    const currentOpacity = img.style.opacity === "0.4" ? "1" : "0.4";
-                    img.style.opacity = currentOpacity;
-                    opacityMap[imgId] = currentOpacity;
-                }
-            });
-        });
     });
 
     const resetPopup = document.querySelector('.resettip');
@@ -352,7 +341,6 @@ function setupZoomShortcuts() {
         }
     });
 }
-
 setupZoomShortcuts();
 
 //レイヤーメニュー表示（描画）関数
@@ -365,84 +353,77 @@ function renderLayers() {
         layerEl.classList.add("layer-item");
         layerEl.setAttribute("data-id", img.id);
         layerEl.setAttribute("data-selected", img.visible ? "true" : "false"); // その画像が表示されているか
-        layerEl.style.backgroundColor = img.visible ? "#B2D3A5" : "#ccc";
         layerEl.style.position = "relative";
+
+        // ロック状態によって背景色を決定
+        if (img.locked) {
+            layerEl.setAttribute("data-locked", true);
+
+            if (img.visible) {
+                layerEl.style.backgroundColor = "#e35b5b";  // 赤
+            } else {
+                layerEl.style.backgroundColor = "#c7a3a3";
+            }
+            // layerEl.style.mixBlendMode = "multiply";
+        } else {
+            // ロックされていなければ、表示状態に応じて緑や灰色に
+            if (img.visible) {
+                layerEl.style.backgroundColor = isDragEnabled ? "#B2D3A5" : "#8BB174"; // 緑系
+            } else {
+                layerEl.style.backgroundColor = isDragEnabled ? "#ccc" : "#999"; // 灰色系
+            }
+        }
 
         const label = document.createElement("span");
         label.textContent = img.id; // レイヤーの表示名として画像IDを表示
-
         layerEl.appendChild(label);
 
-        // 不透明度レイヤーの生成
-        const opacityItem = document.createElement("div");
-        opacityItem.classList.add("opacity-item");
-        opacityItem.dataset.id = img.id;
-        opacityItem.style.opacity = "0.3";
-        opacityItem.style.position = "absolute";
-        opacityItem.style.top = "0";
-        opacityItem.style.left = "0";
-        opacityItem.style.width = "100%";
-        opacityItem.style.height = "100%";
-        opacityItem.style.backgroundColor = "#333";
-        opacityItem.style.zIndex = "10";
-        opacityItem.style.display = "none";
-        opacityItem.style.alignItems = "center";
-        opacityItem.style.justifyContent = "center";
-        opacityItem.style.cursor = "pointer";
-
-        opacityItem.style.backgroundColor = img.altColor || "#ddd";
-
-        // CSSクラスで色を切り替え
-        opacityItem.classList.remove("alt-color");
-        updateOpacityColor(opacityItem);
-
-        layerEl.appendChild(opacityItem);
-
-        opacityItem.addEventListener("click", () => {
-            opacityItem.classList.toggle("alt-color");
-
-            if (opacityItem.classList.contains("alt-color")) {
-                opacityItem.style.backgroundColor = "#0000ff";
-            } else {
-                opacityItem.style.backgroundColor = "#ddd";
-            }
-
-            const isNowActive = !opacityItem.classList.contains("alt-color");
-
-            img.opacity = isNowActive ? 0.4 : 1;
-
-            const currentColor = window.getComputedStyle(opacityItem).backgroundColor;
-            const imgEl = document.querySelector(`img[data-id="${img.id}"]`);
-            if (imgEl) {
-                if (currentColor === "rgb(51,102,255)" || currentColor === "rgb(0,0,255)") {
-                    img.opacity = 0.4;
-                } else {
-                    img.opacity = 1;
-                }
-
-                imgEl.style.opacity = img.opacity;
-            }
-            updateOpacityColor(opacityItem);
-        });
-
-        // 透明度変更中の時はレイヤーアイテムの入力を無効化
-        layerEl.addEventListener("click", () => {
-            if (isOpacityChanging) return;
-
+        layerEl.addEventListener("click", (e) => {
             const savedScrollLeft = dropArea.scrollLeft;
             const savedScrollTop = dropArea.scrollTop;
-
-            const isSelected = layerEl.getAttribute("data-selected") === "true";
-            layerEl.setAttribute("data-selected", isSelected ? "false" : "true");
-            layerEl.style.backgroundColor = isSelected ? (isDragEnabled ? "#ccc" : "#999") : (isDragEnabled ? "#B2D3A5" : "#8BB174");
 
             const targetId = layerEl.getAttribute("data-id");
             const targetImg = images.find(img => img.id === targetId);
 
-            if (targetImg) {
-                targetImg.visible = !isSelected;
+            if (e.altKey) {
+                if (targetImg.locked) {
+                    targetImg.locked = false;
+                    layerEl.removeAttribute("data-locked");
+                    const isSelected = layerEl.getAttribute("data-selected") === "true";
+                    layerEl.style.backgroundColor = isSelected
+                        ? (isDragEnabled ? "#B2D3A5" : "#8BB174")
+                        : (isDragEnabled ? "#ccc" : "#999");
+                    showTempMessage("画像のロックを解除しました");
+                } else {
+                    targetImg.locked = true;
+                    layerEl.setAttribute("data-locked", true);
+
+                    if (targetImg.visible) {
+                        layerEl.style.backgroundColor = "#e35b5b";
+                    } else {
+                        layerEl.style.backgroundColor = "#c7a3a3";
+                    }
+                    showTempMessage("画像をロックしました");
+                }
+                return;
+            }
+            if (targetImg.locked) {
+                return;
             }
 
+            const isSelected = layerEl.getAttribute("data-selected") === "true";
+            const newSelected = !isSelected;
+            layerEl.setAttribute("data-selected", newSelected ? "true" : "false");
+
+            if (newSelected) {
+                layerEl.style.backgroundColor = isDragEnabled ? "#B2D3A5" : "#8BB174";
+            } else {
+                layerEl.style.backgroundColor = isDragEnabled ? "#ccc" : "#999";
+            }
+
+            if (targetImg) {
+                targetImg.visible = newSelected;
+            }
             renderImages();
 
             dropArea.scrollLeft = savedScrollLeft;
@@ -454,25 +435,15 @@ function renderLayers() {
 
         // ドラッグ開始
         layerEl.addEventListener("dragstart", (e) => {
-            if (opacityItem.style.display === 'flex') {
-                e.preventDefault();  // opacityItemが表示されている場合はドラッグを無効化
-            } else {
-                e.dataTransfer.setData("text/plain", index.toString());
-                e.dataTransfer.effectAllowed = "move";
-                layerEl.classList.add("dragging");
-                opacityItem.classList.add("dragging-opacity");
-                originalColor = layerEl.style.backgroundColor;
-                layerEl.style.transform = "scale(1.05)";
-                layerEl.style.backgroundColor = "#e0a49b";
-
-                opacityItem.style.left = "0";
-                opacityItem.style.top = "0";
-
-                opacityItem.style.backgroundColor = img.altColor;
-            }
+            e.dataTransfer.setData("text/plain", index.toString());
+            e.dataTransfer.effectAllowed = "move";
+            layerEl.classList.add("dragging");
+            originalColor = layerEl.style.backgroundColor;
+            layerEl.style.transform = "scale(1.05)";
+            layerEl.style.backgroundColor = "#e0a49b";
         });
 
-        layerEl.addEventListener("drgover", (e) => {
+        layerEl.addEventListener("dragover", (e) => {
             e.preventDefault();
             const dragging = document.querySelector(".dragging");
             if (dragging && dragging !== layerEl) {
@@ -485,15 +456,9 @@ function renderLayers() {
             const savedScrollLeft = dropArea.scrollLeft;
             const savedScrollTop = dropArea.scrollTop;
 
-            const wasAltColor = opacityItem.classList.contains("alt-color");
-
             layerEl.classList.remove("dragging");
-            opacityItem.classList.remove("dragging-opacity");
             layerEl.style.transform = "scale(1)";
             layerEl.style.backgroundColor = originalColor;
-            opacityItem.style.backgroundColor = img.altColor || "#ddd";
-
-            img.opacity = wasAltColor ? 0.4 : 1;
 
             updateImageOrder(); // 画像の順番を更新する関数
             renderImages();
@@ -502,69 +467,74 @@ function renderLayers() {
                 dropArea.scrollLeft = savedScrollLeft;
                 dropArea.scrollTop = savedScrollTop;
             });
-
-            const newOpacityItem = document.querySelector(`.opacity-item[data-id="${img.id}"]`);
-            if (wasAltColor) {
-                newOpacityItem.classList.add("alt-color");
-            } else {
-                newOpacityItem.classList.remove("alt-color");
-            }
-
-            const imgEl = document.querySelector(`img[data-id="${img.id}"]`);
-            if (imgEl) {
-                imgEl.style.opacity = wasAltColor ? 0.4 : 1;
-            }
-
-            updateOpacityColor(opacityItem);
         });
+        const lockLabel = document.createElement("div");
+        lockLabel.textContent = "画像の表示ロック中";
+        lockLabel.style.position = "absolute";
+        lockLabel.style.top = "50%";
+        lockLabel.style.right = "5%";
+        lockLabel.style.transform = "translate(-5%, -50%)";
+        lockLabel.style.backgroundColor = "rgba(255, 255, 255, 0.7)";
+        lockLabel.style.color = "#333";
+        lockLabel.style.padding = "4px 8px";
+        lockLabel.style.borderRadius = "4px";
+        lockLabel.style.fontSize = "18px";
+        lockLabel.style.pointerEvents = "none";
+        lockLabel.style.display = "none";
+        layerEl.appendChild(lockLabel);
+
+        layerEl.addEventListener("mouseenter", () => {
+            if (img.locked) {
+                lockLabel.textContent = img.visible ? "表示中 🔒" : "非表示 🔒";
+                lockLabel.style.display = "block";
+            }
+        });
+
+        layerEl.addEventListener("mouseleave", () => {
+            lockLabel.style.display = "none";
+        });
+
         layerMenu.appendChild(layerEl);
     });
-
     updateButtonState();
 }
 
-// alt-color の状態を反映する関数（色設定）
-function updateOpacityColor(opacityItem) {
-    if (opacityItem.classList.contains("alt-color")) {
-        opacityItem.style.backgroundColor = "#0000ff"; // 青
-    } else {
-        opacityItem.style.backgroundColor = "#333"; // 灰色
-    }
-}
+function showTempMessage(message, duration = 1000) {
+    dragCheckText.textContent = message;
+    dragCheckText.style.backgroundColor = "#e35b5b";
+    dragCheckText.style.color = "#fff";
+    dragCheckText.style.opacity = 1;
 
-const opacityItems = document.querySelectorAll('.opacity-item');
-
-function saveInitialOpacity() {
-    opacityItems.forEach(item => {
-        initialOpacity[item.id] = item.style.backgroundColor || 'initial';
-    });
+    clearTimeout(dragCheckText._timeout);
+    dragCheckText._timeout = setTimeout(() => {
+        dragCheckText.textContent = isDragEnabled ? "ドラッグ機能ON" : "ドラッグ機能OFF";
+        dragCheckText.style.backgroundColor = isDragEnabled ? "#B2D3A5" : "#8bb174";
+        dragCheckText.style.color = "#000";
+    }, duration);
 }
 
 // すべて表示ボタン
 selectAllButton.addEventListener('click', () => {
     const layerEls = layerMenu.querySelectorAll(".layer-item");
-    const allSelected = [...layerEls].every(el => el.getAttribute("data-selected") === "true");
 
-    if (Object.keys(initialOpacity).length === 0) {
-        saveInitialOpacity();
-    }
+    const allSelectable = [...layerEls].filter((_, i) => !images[i].locked);
+    const allSelected = allSelectable.every(el => el.getAttribute("data-selected") === "true");
 
     const zoom = dropArea.style.transform;
     const savedScrollLeft = dropArea.scrollLeft;
     const savedScrollTop = dropArea.scrollTop;
 
     layerEls.forEach((layerEl, index) => {
+        const img = images[index];
         const newState = !allSelected;
-        layerEl.setAttribute("data-selected", newState ? "true" : "false");
-        layerEl.style.backgroundColor = newState ? (isDragEnabled ? "#B2D3A5" : "#8BB174") : "#ccc";
-        images[index].visible = newState;
 
-        const opacityItem = layerEl.querySelector(".opacity-item");
-        if (newState) {
-            opacityItem.style.backgroundColor = initialOpacity[opacityItem.id] || "#333";
-        } else {
-            opacityItem.style.backgroundColor = initialOpacity[opacityItem.id] || "#4f6ba8";
+        if (img.locked) {
+            return;
         }
+
+        layerEl.setAttribute("data-selected", newState ? "true" : "false");
+        layerEl.style.backgroundColor = newState ? (isDragEnabled ? "#B2D3A5" : "#8BB174") : (isDragEnabled ? "#ccc" : "#999");
+        img.visible = newState;
     });
     renderImages();
     requestAnimationFrame(() => {
@@ -572,7 +542,6 @@ selectAllButton.addEventListener('click', () => {
         dropArea.scrollLeft = savedScrollLeft;
         dropArea.scrollTop = savedScrollTop;
     });
-
     toggleImageDrag();
     toggleLayerDrag();
 });
@@ -1040,6 +1009,9 @@ backPileUp.addEventListener('click', () => {
 layerMenu.addEventListener("dragover", (e) => {
     e.preventDefault();
     const dragging = document.querySelector(".dragging");
+
+    if (!dragging || !(dragging instanceof Node)) return;
+
     const afterElement = getDragAfterElement(layerMenu, e.clientY);
     if (afterElement == null) {
         layerMenu.appendChild(dragging);
@@ -1052,13 +1024,14 @@ layerMenu.addEventListener("dragover", (e) => {
 function getDragAfterElement(container, y) {
     // 今ドラッグ中じゃない「.layer-item」を全部取得
     const elements = [...container.querySelectorAll(".layer-item:not(.dragging)")];
-    return elements.reduce((closest, child) => {
+    const closest = elements.reduce((closest, child) => {
         const box = child.getBoundingClientRect();
 
         // マウスのY座標と、各要素の中心との距離を計算（offset = マウスの位置 - layer-item要素の中央位置）
         const offset = y - box.top - box.height / 2;
         return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
-    }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }, { offset: Number.NEGATIVE_INFINITY, element: null });
+    return closest.element;
 }
 
 // 画像順の更新
